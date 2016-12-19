@@ -7,11 +7,12 @@ import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.dairui.coolweather.Adapter.ListView_Adapter;
 import com.dairui.coolweather.R;
 import com.dairui.coolweather.db.CoolWeatherDB;
 import com.dairui.coolweather.model.City;
@@ -43,7 +44,7 @@ public class ChooseAreaActivity extends Activity {
     private ListView list_view;
     private CoolWeatherDB coolWeatherDB;
     private List<String> dataList = new ArrayList<>(); // ListView 数据
-    private ArrayAdapter<String> adapter;
+    private BaseAdapter adapter;
 
     private int currentLevel; // 当前选择的级别
 
@@ -65,7 +66,8 @@ public class ChooseAreaActivity extends Activity {
         setContentView(R.layout.choore_area);
         tv_title = (TextView) findViewById(R.id.tv_title);
         list_view = (ListView) findViewById(R.id.list_view);
-        adapter = new ArrayAdapter<String>(this, R.layout.simple_list_item_1, dataList);
+//        adapter = new ArrayAdapter<String>(this, R.layout.simple_list_item_1, dataList);
+        adapter=new ListView_Adapter(this,dataList);
         list_view.setAdapter(adapter);
         coolWeatherDB = CoolWeatherDB.getInstance(getApplicationContext());
         list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -75,12 +77,11 @@ public class ChooseAreaActivity extends Activity {
                 if (currentLevel == LEVEL_PROVINCE) {
                     selectProvince = provinceList.get(position);
                     queryCitys();
-
                 } else if (currentLevel == LEVEL_CITY) {
                     selectCity = cityList.get(position);
                     queryCountrys();
                 } else if (currentLevel == LEVEL_COUNTRY) {
-                    Toast.makeText(ChooseAreaActivity.this, "天气马上加载", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ChooseAreaActivity.this, "天气马上加载 ^_^ ", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -143,8 +144,9 @@ public class ChooseAreaActivity extends Activity {
             // 更新ListView 数据
             for (County county : countyList) {
                 dataList.add(county.getCounty_Name());
-                adapter.notifyDataSetChanged();
+
             }
+            adapter.notifyDataSetChanged();
             currentLevel = LEVEL_COUNTRY;
         } else {
             // 从服务器中查询
@@ -176,6 +178,9 @@ public class ChooseAreaActivity extends Activity {
                     result = ResponseParse.ParseProvince(response, coolWeatherDB);
                 } else if (type.equals("city")) {
                     result = ResponseParse.ParseCity(response, coolWeatherDB, selectProvince.getId());
+                }else if (type.equals("country"))
+                {
+                    result=ResponseParse.ParseCounty(response,coolWeatherDB,selectCity.getId());
                 }
 
                 if (result) {
@@ -230,6 +235,18 @@ public class ChooseAreaActivity extends Activity {
     private void closeProgressDialog() {
         if (progressDialog != null) {
             progressDialog.dismiss();
+        }
+    }
+
+    int preCount=0;
+    @Override
+    public void onBackPressed() {
+        preCount++;
+        Toast.makeText(this, "再按一下就离开主人了 ~>_<~", Toast.LENGTH_SHORT).show();
+        if (preCount==2)
+        {
+            super.onBackPressed();
+            preCount=0;
         }
     }
 }
